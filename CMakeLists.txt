@@ -19,6 +19,9 @@ option(ENABLE_WARNINGS_SETTINGS "Allow target_set_warnings to add flags and defi
 option(ENABLE_LTO "Enable link time optimization" ON)
 option(ENABLE_DOCTESTS "Include tests in the library. Setting this to OFF will remove all doctest related code.
                         Tests in tests/*.cpp will still be enabled." ON)
+# Add pthreads
+# run gcc with -pthread
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 # Include stuff. No change needed.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -38,7 +41,7 @@ find_lto(CXX)
 #                         Locate files (change as needed).
 # --------------------------------------------------------------------------------
 set(SOURCES          # All .cpp files in src/
-    src/example.cpp
+    src/psrs.cpp
 )
 set(TESTFILES        # All .cpp files in tests/
     tests/main.cpp
