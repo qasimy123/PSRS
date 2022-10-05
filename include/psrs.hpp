@@ -1,5 +1,5 @@
 /**
- * @file psrs.h
+ * @file psrs.hpp
  * @author Qasim Khawaja (khawaja@ualberta.ca)
  * @brief Header file for the PSRS algorithm.
  * @version 0.1
@@ -10,84 +10,56 @@
  */
 
 #include <algorithm>
-#include <iostream>
-#include <vector>
-// #include <mpi.h>
+#include <cassert>
 #include <chrono>
-#include <random>
+#include <cstdlib>
+#include <iostream>
+#include <limits.h>
+#include <math.h>
+#include <pthread.h>
+#include <stdio.h>
 
-#define vi std::vector<int>
+#define MASTER if (myId == 0)
+#define BARRIER pthread_barrier_wait(&barrier);
+#define BARRIER_INIT pthread_barrier_init(&barrier, NULL, p);
+#define BARRIER_DESTROY pthread_barrier_destroy(&barrier);
 
 /**
- * Class for the PSRS object.
+ * @brief myPSRS is the main function for the PSRS algorithm.
+ * @param arg is a pointer to the thread control block.
  *
  */
-class PSRS {
-public:
-    /**
-     * Constructor for the PSRS object
-     *
-     * @param n The number of elements in the array.
-     * @param p The number of processors.
-     * @param seed The seed for the random number generator.
-     */
-    PSRS(int n, int p, int seed);
+void* myPSRS(void* arg);
 
-    /**
-     * @brief Perform the PSRS algorithm using p processors.
-     *
-     * @return std::vector<int> The sorted array.
-     */
-    vi sort();
-
-private:
-    int n; // The number of elements in the array.
-    int p; // The number of processors.
-    int seed; // The seed for the random number generator.
-    vi array; // The array to sort.
-
-    /**
-     * @brief Generate a list of size n using the seed.
-     *
-     */
-    vi generateArray();
-
-    /**
-     * @brief Generate sublist of size n/p from the array.
-     * 
-     * @param processor The processor number.
-     */
-    vi generateSublist(int processor);
-
-    /**
-     * @brief Sort the local array.
-     *
-     * @param start The start index of the local array.
-     * @param end The end index of the local array.
-     */
-    void sortLocal(int start, int end);
-
-    /**
-     * @brief Find the p-1 pivots from the sample.
-     *
-     */
-    void findPivots();
-
-    /**
-     * @brief Partition the local array into p-1 buckets and stores the partitions in the partitions array.
-     *
-     * @param start The start index of the local array.
-     * @param end The end index of the local array.
-     */
-    void partitionLocal(int start, int end);
-
-    /**
-     * @brief Exchange the partitions between the processors.
-     */
-    void exchangePartitions();
-
-    /**
-     * @brief Merge the partitions into the global array.
-     */
-    void mergePartitions();
+pthread_barrier_t barrier;
+struct ThreadControlBlock {
+    int id;
 };
+
+struct ThreadControlBlock* tcb;
+
+struct StartEnd {
+    long long start;
+    long long end;
+};
+
+struct SubArray {
+    long* start;
+    long* end;
+};
+
+// compare function for qsort
+int compare(const void* a, const void* b)
+{
+    return (*(long*)a - *(long*)b);
+}
+
+pthread_t* threads;
+long* A;
+long* samples;
+long* pivots;
+struct StartEnd* partitionStartEnd;
+int p;
+long long n;
+int s;
+struct SubArray* subArrays;
