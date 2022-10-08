@@ -21,8 +21,8 @@ option(ENABLE_DOCTESTS "Include tests in the library. Setting this to OFF will r
                         Tests in tests/*.cpp will still be enabled." ON)
 # Add pthreads
 # run gcc with -pthread
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
+set(CMAKE_CXX_FLAGS "-O3 -pthread")
 # Include stuff. No change needed.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 include(ConfigSafeGuards)
