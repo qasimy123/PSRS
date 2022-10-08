@@ -104,14 +104,18 @@ void* myPSRS(void* arg)
     // std::cout << "Thread " + std::to_string(myId) + " start: " + std::to_string(start) + " end: " + std::to_string(end)+"\n";
     // auto beginPhase1 = std::chrono::steady_clock::now();
     // Quick sort the local array
-    qsort(A + start, end - start + 1, sizeof(long), compare);
+    long* localA = (long*)malloc((end - start + 1) * sizeof(long));
+    for (int i = start; i <= end; i++) {
+        localA[i - start] = A[i];
+    }
+    qsort(localA, end - start + 1, sizeof(long), compare);
     // auto endPhase1 = std::chrono::steady_clock::now();
     BARRIER
     // Collect samples at n/(p*p) intervals
     int w = n / (p * p);
     int startP = myId * p;
     for (int i = 0; i < p; i++) {
-        samples[startP + i] = A[start + i * w];
+        samples[startP + i] = localA[i * w];
     }
     // std::cout << "Thread " + std::to_string(myId) + " Phase 1: " + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(endPhase1 - beginPhase1).count()) + "s\n";
     BARRIER
