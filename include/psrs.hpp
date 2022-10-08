@@ -17,9 +17,9 @@
 #include <limits.h>
 #include <math.h>
 #include <pthread.h>
+#include <random>
 #include <stdio.h>
 #include <vector>
-#include <random>
 
 #define MASTER if (myId == 0)
 #define BARRIER pthread_barrier_wait(&barrier);
@@ -53,3 +53,42 @@ struct StartEnd* partitionStartEnd;
 int p;
 long long n;
 int s;
+
+// Add macros for enabling/disabling specific outputs
+
+#if TIMING
+std::chrono::_V2::steady_clock::time_point beginPhaseTime;
+std::chrono::_V2::steady_clock::time_point endPhaseTime;
+#define START_TIMER beginPhaseTime = std::chrono::steady_clock::now();
+#define END_TIMER endPhaseTime = std::chrono::steady_clock::now();
+#define PRINT_TIME(threadId, phase) \
+    std::cout << "Thread: " + std::to_string(threadId) + " Phase: " + std::to_string(phase) + " time: " + std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(endPhaseTime - beginPhaseTime).count()) + "\n";
+#else
+#define START_TIMER
+#define END_TIMER
+#define PRINT_TIME(threadId, phase)
+#endif
+
+#if DEBUG
+#define DEBUG_PRINT_SORTED(x)                          \
+    std::string sorted = "";                           \
+    for (long unsigned int i = 0; i < x.size(); i++) { \
+        sorted += std::to_string(x[i]) + " ";          \
+    }                                                  \
+    std::cout << "Thread:" + std::to_string(myId) + " " + sorted + "\n";
+#else
+#define DEBUG_PRINT_SORTED(x)
+#endif
+
+#if VALIDATE_SORT
+struct MinMaxCount {
+    long min;
+    long max;
+    size_t count;
+};
+std::vector<struct MinMaxCount> allMinMaxCount;
+int compareMinMaxCount(const MinMaxCount& a, const MinMaxCount& b)
+{
+    return a.min < b.min;
+}
+#endif

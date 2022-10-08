@@ -18,7 +18,20 @@ option(ENABLE_WARNINGS_SETTINGS "Allow target_set_warnings to add flags and defi
                                  Set this to OFF if you want to provide your own warning parameters." ON)
 option(ENABLE_LTO "Enable link time optimization" ON)
 option(ENABLE_DOCTESTS "Include tests in the library. Setting this to OFF will remove all doctest related code.
-                        Tests in tests/*.cpp will still be enabled." ON)
+                        Tests in tests/*.cpp will still be enabled." OFF)
+
+IF(ENABLE_PHASE_TIMING)
+    ADD_COMPILE_DEFINITIONS(TIMING)
+ENDIF(ENABLE_PHASE_TIMING)
+IF(ENABLE_DEBUG)
+    ADD_COMPILE_DEFINITIONS(DEBUG)
+ENDIF(ENABLE_DEBUG)
+IF(ENABLE_RANDOM_SAMPLING)
+    ADD_COMPILE_DEFINITIONS(RANDOM_SAMPLING)
+ENDIF(ENABLE_RANDOM_SAMPLING)
+IF(ENABLE_VALIDATE)
+    ADD_COMPILE_DEFINITIONS(VALIDATE_SORT)
+ENDIF(ENABLE_VALIDATE)
 # Add pthreads
 # run gcc with -pthread
 

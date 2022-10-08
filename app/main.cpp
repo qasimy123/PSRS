@@ -15,9 +15,6 @@
 int main(int argc, char** argv)
 {
     bool useUniprocessor = false;
-    // Read in p=number of processors, n=number of elements, s=seed
-    // std::cout << "Enter p, n, s, useUniprocesser: ";
-    // std::cin >> p >> n >> s >> useUniprocessor;
     if (argc != 5) {
         std::cout << "Usage: ./psrs p n s useUniprocessor" << std::endl;
         return 0;
@@ -30,15 +27,9 @@ int main(int argc, char** argv)
 
     // set concurrency to p
     pthread_setconcurrency(p);
-    // assert(pow(p, 3) <= n);
+    assert(pow(p, 3) <= n);
     // Malloc memory for the array
-    // 16 2 17 24 33 28 30 1 0 27 9 25 34 23 19 18 11 7 21 13 8 35 12 29 6 3 4 14 22 15 32 10 26 31 20 5
-    // long j[] = { 16, 2, 17, 24, 33, 28, 30, 1, 0, 27, 9, 25, 34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 6, 3, 4, 14, 22, 15, 32, 10, 26, 31, 20, 5 };
-    // n = 36;
     A = (long*)malloc((n + 1) * sizeof(long));
-    // for (int i = 0; i < n; i++) {
-    //     A[i] = j[i];
-    // }
     samples = (long*)malloc((p + 1) * (p + 1) * sizeof(long));
     pivots = (long*)malloc((p + 1) * sizeof(long));
     partitionStartEnd = (struct StartEnd*)malloc((p + 1) * (p + 1) * sizeof(struct StartEnd));
@@ -49,8 +40,6 @@ int main(int argc, char** argv)
         *(A + i) = random();
     }
     assert(std::is_sorted(A, A + n) == false);
-
-    // std::cout << "Uniprocessor: " << useUniprocessor << std::endl;
 
     if (useUniprocessor) {
         auto begin = std::chrono::steady_clock::now();
@@ -98,25 +87,31 @@ void* myPSRS(void* arg)
 
     long long start = myId * n / p;
     long long end = (myId + 1) * n / p - 1;
-    // std::cout << "Thread " + std::to_string(myId) + " start: " + std::to_string(start) + " end: " + std::to_string(end)+"\n";
-    // auto beginPhase1 = std::chrono::steady_clock::now();
+    START_TIMER;
     // Quick sort the local array
-    long* localA = (long*)malloc((end - start + 1) * sizeof(long));
-    for (int i = start; i <= end; i++) {
-        localA[i - start] = A[i];
-    }
-    qsort(localA, end - start + 1, sizeof(long), compare);
-    // auto endPhase1 = std::chrono::steady_clock::now();
+    qsort(A + start, end - start + 1, sizeof(long), compare);
+    END_TIMER;
+    PRINT_TIME(myId, 1);
     BARRIER
+
+    // Collect samples
+#if RANDOM_SAMPLING
+    // Collect samples at random intervals
+    int startP = myId * p;
+    for (int i = 0; i < p; i++) {
+        samples[startP + i] = A[random() % (end - start + 1) + start];
+    }
+#else
     // Collect samples at n/(p*p) intervals
     int w = n / (p * p);
     int startP = myId * p;
     for (int i = 0; i < p; i++) {
-        samples[startP + i] = localA[i * w];
+        samples[startP + i] = A[i * w + start];
     }
-    // std::cout << "Thread " + std::to_string(myId) + " Phase 1: " + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(endPhase1 - beginPhase1).count()) + "s\n";
+#endif
+
     BARRIER
-    // auto beginPhase2 = std::chrono::steady_clock::now();
+    START_TIMER;
     // Sort the samples
     MASTER
     {
@@ -137,17 +132,25 @@ void* myPSRS(void* arg)
         partitionStartEnd[index + 1].start = partitionStartEnd[index].end + 1;
     }
     BARRIER
-    // auto endPhase2 = std::chrono::steady_clock::now();
-    // std::cout << "Thread " + std::to_string(myId) + " Phase 2: " + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(endPhase2 - beginPhase2).count()) + "s\n";
-    // auto beginPhase4 = std::chrono::steady_clock::now();
+    END_TIMER;
+    PRINT_TIME(myId, 2);
+    START_TIMER;
     // K-way merge
     std::vector<long> localSorted;
     std::vector<std::pair<long, int>> heap;
+#if VALIDATE_SORT
+    long long minIndex = LONG_MAX;
+    long long maxIndex = 0;
+#endif
 
     for (int i = 0; i < p; i++) {
         int currStart = i * p + myId;
         long long currStartIndex = partitionStartEnd[currStart].start;
         long long currEndIndex = partitionStartEnd[currStart].end;
+#if VALIDATE_SORT
+        minIndex = std::min(minIndex, currStartIndex);
+        maxIndex = std::max(maxIndex, currEndIndex);
+#endif
         if (i > 0 && currStartIndex == 0 && currEndIndex == 0) {
             continue;
         }
@@ -174,15 +177,33 @@ void* myPSRS(void* arg)
         }
     }
 
-    // auto endPhase4 = std::chrono::steady_clock::now();
-    // std::cout << "Thread " + std::to_string(myId) + " Phase 4: " + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(endPhase4 - beginPhase4).count()) + "s\n";
+    END_TIMER;
+    PRINT_TIME(myId, 4);
 
-    // std::string sorted = "";
-    // for (long unsigned int i = 0; i < localSorted.size(); i++) {
-    //     sorted += std::to_string(localSorted[i]) + " ";
-    // }
-    // std::cout << "Thread:" + std::to_string(myId) + " " + sorted + "\n";
+    BARRIER
+    DEBUG_PRINT_SORTED(localSorted);
+#if VALIDATE_SORT
 
+    assert(std::is_sorted(localSorted.begin(), localSorted.end()) == true);
+    MinMaxCount minMaxCount = { localSorted.front(), localSorted.back(), localSorted.size() };
+    allMinMaxCount.push_back(minMaxCount);
+    BARRIER
+    MASTER
+    {
+        std::cout << "Validating sort" << std::endl;
+        std::sort(allMinMaxCount.begin(), allMinMaxCount.end(), compareMinMaxCount);
+        // Ensure that the sorted array in each thread is disjoint
+        long long prevMax = allMinMaxCount[0].max;
+        long long total = allMinMaxCount[0].count;
+        for (size_t i = 1; i < allMinMaxCount.size(); i++) {
+            assert(prevMax <= allMinMaxCount[i].min);
+            prevMax = allMinMaxCount[i].max;
+            total += allMinMaxCount[i].count;
+        }
+        assert(total == n); // Check if all elements are present
+    }
+
+#endif
     BARRIER
     return NULL;
 }
