@@ -10,11 +10,8 @@
  */
 
 #include "psrs.hpp"
-#include <vector>
-bool comparePair(const std::pair<long, int>& a, const std::pair<long, int>& b)
-{
-    return a.first > b.first;
-}
+#include "utils.hpp"
+
 int main(int argc, char** argv)
 {
     bool useUniprocessor = false;

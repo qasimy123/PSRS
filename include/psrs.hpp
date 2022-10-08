@@ -18,6 +18,8 @@
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <vector>
+#include <random>
 
 #define MASTER if (myId == 0)
 #define BARRIER pthread_barrier_wait(&barrier);
@@ -43,17 +45,6 @@ struct StartEnd {
     long long end;
 };
 
-struct SubArray {
-    long* start;
-    long* end;
-};
-
-// compare function for qsort
-int compare(const void* a, const void* b)
-{
-    return (*(long*)a - *(long*)b);
-}
-
 pthread_t* threads;
 long* A;
 long* samples;
@@ -62,4 +53,3 @@ struct StartEnd* partitionStartEnd;
 int p;
 long long n;
 int s;
-struct SubArray* subArrays;
