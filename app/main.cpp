@@ -50,7 +50,13 @@ int main(int argc, char** argv)
     }
 #endif
     assert(std::is_sorted(A, A + n) == false);
-
+#if DEBUG
+    std::cout << "Unsorted Array: " << std::endl;
+    for (int i = 0; i < n; i++) {
+        std::cout << A[i] << " ";
+    }
+    std::cout << std::endl;
+#endif
     if (useUniprocessor) {
         auto begin = std::chrono::steady_clock::now();
         qsort(A, n, sizeof(long), compare);
