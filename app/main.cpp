@@ -132,7 +132,10 @@ void* myPSRS(void* arg)
             pivots[i] = samples[(i + 1) * p];
         }
     }
+    END_TIMER;
+    PRINT_TIME(myId, 2);
     BARRIER
+    START_TIMER;
     // Use binary search to find the partition boundaries
     partitionStartEnd[startP].start = start;
     partitionStartEnd[startP + p - 1].end = end;
@@ -141,9 +144,10 @@ void* myPSRS(void* arg)
         partitionStartEnd[index].end = std::lower_bound(A + partitionStartEnd[index].start, A + end + 1, pivots[i]) - A - 1;
         partitionStartEnd[index + 1].start = partitionStartEnd[index].end + 1;
     }
-    BARRIER
     END_TIMER;
-    PRINT_TIME(myId, 2);
+    PRINT_TIME(myId, 3);
+    BARRIER
+
     START_TIMER;
     // K-way merge
     std::vector<long> localSorted;
