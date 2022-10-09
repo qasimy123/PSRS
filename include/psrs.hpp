@@ -91,4 +91,5 @@ int compareMinMaxCount(const MinMaxCount& a, const MinMaxCount& b)
 {
     return a.min < b.min;
 }
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif

@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 {
     bool useUniprocessor = false;
     if (argc != 5) {
-        std::cout << "Usage: ./psrs p n s useUniprocessor" << std::endl;
+        std::cout << "Usage: ./main p n s useUniprocessor" << std::endl;
         return 0;
     }
     p = atoi(argv[1]);
@@ -34,11 +34,21 @@ int main(int argc, char** argv)
     pivots = (long*)malloc((p + 1) * sizeof(long));
     partitionStartEnd = (struct StartEnd*)malloc((p + 1) * (p + 1) * sizeof(struct StartEnd));
     BARRIER_INIT
-    // Generate the array
+#if NORMAL
+    // Generate a random array with normal distribution
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<> d(500, 100);
+    for (int i = 0; i < n; i++) {
+        A[i] = d(gen);
+    }
+#else
+    // Generate the array with uniform random numbers
     srandom(s);
     for (long long i = 0; i < n; i++) {
         *(A + i) = random();
     }
+#endif
     assert(std::is_sorted(A, A + n) == false);
 
     if (useUniprocessor) {
@@ -186,7 +196,9 @@ void* myPSRS(void* arg)
 
     assert(std::is_sorted(localSorted.begin(), localSorted.end()) == true);
     MinMaxCount minMaxCount = { localSorted.front(), localSorted.back(), localSorted.size() };
+    pthread_mutex_lock(&mutex);
     allMinMaxCount.push_back(minMaxCount);
+    pthread_mutex_unlock(&mutex);
     BARRIER
     MASTER
     {
