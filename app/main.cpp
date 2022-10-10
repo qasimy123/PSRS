@@ -43,11 +43,21 @@ int main(int argc, char** argv)
         A[i] = d(gen);
     }
 #else
-    // Generate the array with uniform random numbers
+#if UNIFORM
+    // Generate a random array with uniform distribution
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> d(400, 600);
+    for (int i = 0; i < n; i++) {
+        A[i] = d(gen);
+    }
+#else
+    // Generate the array with stand random numbers
     srandom(s);
     for (long long i = 0; i < n; i++) {
         *(A + i) = random();
     }
+#endif
 #endif
     assert(std::is_sorted(A, A + n) == false);
 #if DEBUG
