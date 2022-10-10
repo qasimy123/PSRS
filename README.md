@@ -11,8 +11,6 @@
 │   └── utils.hpp
 ├── src
 │   └── utils.cpp
-├── tests
-│   └── main.cpp
 ├── experiments
 │   ├── correctness
 │   │   # CSV files with data from experiments
