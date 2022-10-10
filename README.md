@@ -36,7 +36,7 @@ Example:
 
 ``` bash
 > mkdir build && cd build
-> cmake .. -DENABLE_PHASE_TIMING=OFF -DENABLE_DEBUG=OFF -DENABLE_RANDOM_SAMPLING=OFF -DENABLE_NORMAL=OFF
+> cmake .. -DENABLE_PHASE_TIMING=OFF -DENABLE_DEBUG=OFF -DENABLE_RANDOM_SAMPLING=OFF -DENABLE_NORMAL=OFF -DENABLE_UNIFORM=OFF
 > make
 > ./main {p} {n} {s} {useUniprocessor (0 or 1)}
 ```
